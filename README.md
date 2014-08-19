@@ -10,7 +10,7 @@ $ go get github.com/scottkiss/gomagic
 ```
 
 ## Httpmagic Useage
-```golang
+```go
 package main
 
 import (
