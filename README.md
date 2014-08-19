@@ -1,6 +1,6 @@
 # About gomagic
-======
 gomagic is a middleware magicbox
+
 
 ## Http Magic Useage
 ```bash
