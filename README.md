@@ -2,8 +2,6 @@
 ======
   gomagic is a middleware magicbox
 
-
-
 ## Http Magic Useage
 ```bash
 $ go get github.com/scottkiss/gomagic/httpmagic
