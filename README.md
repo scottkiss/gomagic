@@ -1,5 +1,5 @@
 # About gomagic
-gomagic is a middleware magicbox
+gomagic is a middleware magicbox,it is not a framework,but a collection of useful middleware
 
 
 ## Http Magic Useage
