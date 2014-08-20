@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"net/http"
+	"path/filepath"
 	"strconv"
 )
 
@@ -22,6 +23,15 @@ func NewOutput(w http.ResponseWriter, r *http.Request) *Output {
 	return &Output{w: w, r: r}
 }
 
+func (out *Output) Header(key, val string) {
+	out.r.Header.Set(key, val)
+}
+
+func (out *Output) Body(b []byte) {
+	out.Header("Content-Length", strconv.Itoa(len(b)))
+	out.w.Write(b)
+}
+
 func (out *Output) Json(v interface{}, hasIndent bool) {
 	var (
 		content []byte
@@ -38,8 +48,8 @@ func (out *Output) Json(v interface{}, hasIndent bool) {
 		http.Error(out.w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	out.w.Header().Set("Content-Length", strconv.Itoa(len(content)))
-	out.w.Header().Set("Content-Type", applicationJSON)
+	out.Header("Content-Length", strconv.Itoa(len(content)))
+	out.Header("Content-Type", applicationJSON)
 	out.w.Write(content)
 }
 
@@ -49,9 +59,20 @@ func (out *Output) Xml(v interface{}) {
 		http.Error(out.w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	out.w.Header().Set("Content-Length", strconv.Itoa(len(content)))
-	out.w.Header().Set("Content-Type", "text/xml; charset=utf-8")
+	out.Header("Content-Length", strconv.Itoa(len(content)))
+	out.Header("Content-Type", "text/xml; charset=utf-8")
 	out.w.Write(content)
+}
+
+func (out *Output) File(file string) {
+	out.Header("Content-Description", "File Transfer")
+	out.Header("Content-Type", "application/octet-stream")
+	out.Header("Content-Disposition", "attachment; filename="+filepath.Base(file))
+	out.Header("Content-Transfer-Encoding", "binary")
+	out.Header("Expires", "0")
+	out.Header("Cache-Control", "must-revalidate")
+	out.Header("Pragma", "public")
+	http.ServeFile(out.w, out.r, file)
 }
 
 func (out *Output) ServeAccept(v interface{}) {
