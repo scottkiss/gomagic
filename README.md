@@ -1,15 +1,12 @@
 # About gomagic
-======
-  gomagic is a middleware magicbox
+gomagic is a middleware magicbox,it is not a framework,but a collection of useful middleware
 
 
-
-## Getting started
+## Http Magic Useage
 ```bash
-$ go get github.com/scottkiss/gomagic
+$ go get github.com/scottkiss/gomagic/httpmagic
 ```
 
-## Httpmagic Useage
 ```go
 package main
 
@@ -22,7 +19,7 @@ import (
 func main() {
   ctx := httpmagic.NewContext()
   //handler get request
-  //eg. http://localhost:9999/hello/100
+  //eg. http://localhost:8888/hello/100
   ctx.Get("/hello/:id", handler)
   //handler get request
   ctx.Get("/world/:id", handlerXml)
