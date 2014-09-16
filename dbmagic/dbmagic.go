@@ -1,7 +1,6 @@
 package dbmagic
 
 import (
-	"database/sql"
 	"fmt"
 	"reflect"
 )
@@ -23,7 +22,7 @@ type DbSession interface {
 	//Changes the current database.
 	Use(string) error
 	Drop() error
-	Setup(DataSource) error
+	NewSession(DataSource) error
 	//return current database name
 	Name() string
 	//Starts a transaction block.
@@ -51,7 +50,7 @@ func Open(name string, settings DataSource) (DbSession, error) {
 	}
 
 	conn := reflect.New(reflect.ValueOf(session).Elem().Type()).Interface().(DbSession)
-	err := conn.Setup(settings)
+	err := conn.NewSession(settings)
 	if err != nil {
 		return nil, err
 	}
