@@ -12,6 +12,7 @@ const (
 	applicationJSON = "application/json"
 	applicationXML  = "application/xml"
 	textXML         = "text/xml"
+	textHTML        = "text/html"
 )
 
 type Output struct {
@@ -32,6 +33,7 @@ func (out *Output) Body(b []byte) {
 	out.w.Write(b)
 }
 
+//Output json data
 func (out *Output) Json(v interface{}, hasIndent bool) {
 	var (
 		content []byte
@@ -53,6 +55,7 @@ func (out *Output) Json(v interface{}, hasIndent bool) {
 	out.w.Write(content)
 }
 
+//Output xml data
 func (out *Output) Xml(v interface{}) {
 	content, err := xml.Marshal(v)
 	if err != nil {
@@ -60,10 +63,11 @@ func (out *Output) Xml(v interface{}) {
 		return
 	}
 	out.Header("Content-Length", strconv.Itoa(len(content)))
-	out.Header("Content-Type", "text/xml; charset=utf-8")
+	out.Header("Content-Type", textXML+"; charset=utf-8")
 	out.w.Write(content)
 }
 
+//Output file
 func (out *Output) File(file string) {
 	out.Header("Content-Description", "File Transfer")
 	out.Header("Content-Type", "application/octet-stream")
@@ -75,6 +79,12 @@ func (out *Output) File(file string) {
 	http.ServeFile(out.w, out.r, file)
 }
 
+//Output Html data
+func (out *Output) Html(v interface{}) {
+	out.Header("Content-Type", textHTML+"; charset=utf-8")
+	out.Body(v.([]byte))
+}
+
 func (out *Output) ServeAccept(v interface{}) {
 	accept := out.r.Header.Get("Accept")
 	switch accept {
@@ -82,6 +92,8 @@ func (out *Output) ServeAccept(v interface{}) {
 		out.Json(v, true)
 	case applicationXML, textXML:
 		out.Xml(v)
+	case textHTML:
+		out.Html(v)
 	default:
 		out.Json(v, true)
 	}

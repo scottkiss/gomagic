@@ -1,0 +1,41 @@
+package httpmagic
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+var index string = `<!DOCTYPE html>
+<html>
+  <head>
+    <title>beego welcome template</title>
+  </head>
+  <body>
+	{{.}}
+  </body>
+</html>
+`
+
+func TestBuild(t *testing.T) {
+	dir := "tmpDir"
+	file := "index.tpl"
+	if err := os.Mkdir(dir, 0777); err != nil {
+		t.Fatal(err)
+	}
+	if f, err := os.Create(filepath.Join(dir, file)); err != nil {
+		t.Fatal(err)
+	} else {
+		f.WriteString(index)
+		f.Close()
+	}
+	r := &Render{dir, file, nil}
+	data, err := r.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(string(data))
+	os.RemoveAll(filepath.Join(dir, file))
+	os.RemoveAll(dir)
+
+}
