@@ -31,7 +31,7 @@ func Test_Build(t *testing.T) {
 	}
 	d := make(map[interface{}]interface{})
 	d["say"] = "hello"
-	r := &Render{dir, file, d}
+	r := &Render{dir, file, d, nil}
 	data, err := r.Build()
 	if err != nil {
 		t.Fatal(err)
