@@ -1,4 +1,4 @@
-package httpmagic
+package webmagic
 
 import (
 	"net/http"
@@ -25,36 +25,36 @@ type route struct {
 	handler http.HandlerFunc
 }
 
-type Context struct {
+type Application struct {
 	routes  []*route
 	filters []http.HandlerFunc
 }
 
-func NewContext() *Context {
-	return &Context{}
+func NewApplication() *Application {
+	return &Application{}
 }
 
-func (c *Context) Get(pattern string, handler http.HandlerFunc) {
+func (c *Application) Get(pattern string, handler http.HandlerFunc) {
 	c.RegisterRoute(HTTPMETHOD["GET"], pattern, handler)
 }
 
-func (c *Context) Del(pattern string, handler http.HandlerFunc) {
+func (c *Application) Del(pattern string, handler http.HandlerFunc) {
 	c.RegisterRoute(HTTPMETHOD["DELETE"], pattern, handler)
 }
 
-func (c *Context) Post(pattern string, handler http.HandlerFunc) {
+func (c *Application) Post(pattern string, handler http.HandlerFunc) {
 	c.RegisterRoute(HTTPMETHOD["POST"], pattern, handler)
 }
 
-func (c *Context) Head(pattern string, handler http.HandlerFunc) {
+func (c *Application) Head(pattern string, handler http.HandlerFunc) {
 	c.RegisterRoute(HTTPMETHOD["HEAD"], pattern, handler)
 }
 
-func (c *Context) Put(pattern string, handler http.HandlerFunc) {
+func (c *Application) Put(pattern string, handler http.HandlerFunc) {
 	c.RegisterRoute(HTTPMETHOD["PUT"], pattern, handler)
 }
 
-func (c *Context) RegisterRoute(method string, pattern string, handler http.HandlerFunc) {
+func (c *Application) RegisterRoute(method string, pattern string, handler http.HandlerFunc) {
 	subpath := strings.Split(pattern, "/")
 	params := make(map[int]string)
 	j := 0
@@ -87,11 +87,11 @@ func (c *Context) RegisterRoute(method string, pattern string, handler http.Hand
 	c.routes = append(c.routes, route)
 }
 
-func (c *Context) Filter(filter http.HandlerFunc) {
+func (c *Application) Filter(filter http.HandlerFunc) {
 	c.filters = append(c.filters, filter)
 }
 
-func (c *Context) FilterParam(param string, filter http.HandlerFunc) {
+func (c *Application) FilterParam(param string, filter http.HandlerFunc) {
 	if !strings.HasPrefix(param, ":") {
 		param = ":" + param
 	}
@@ -103,7 +103,7 @@ func (c *Context) FilterParam(param string, filter http.HandlerFunc) {
 	})
 }
 
-func (c *Context) Static(pattern string, dir string) {
+func (c *Application) Static(pattern string, dir string) {
 	pattern = pattern + "(.+)"
 	c.RegisterRoute(HTTPMETHOD["GET"], pattern, func(rw http.ResponseWriter, r *http.Request) {
 		path := filepath.Clean(r.URL.Path)
@@ -112,7 +112,7 @@ func (c *Context) Static(pattern string, dir string) {
 	})
 }
 
-func (c *Context) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (c *Application) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	requestPath := r.URL.Path
 	w := &responseWrite{writer: rw}
 	for _, route := range c.routes {
@@ -171,4 +171,13 @@ func (rw *responseWrite) WriteHeader(code int) {
 	rw.status = code
 	rw.started = true
 	rw.writer.WriteHeader(code)
+}
+
+func (app *Application) Run(addr string) {
+	if addr == "" {
+		panic("input address invalid")
+	}
+	println("http server run at " + addr)
+	e := http.ListenAndServe(addr, app)
+	panic(e)
 }

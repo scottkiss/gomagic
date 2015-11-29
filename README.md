@@ -2,31 +2,30 @@
 gomagic is a middleware magicbox,it is not a framework,but a collection of useful middleware
 
 
-## Http Magic Useage
+## Web Magic Useage
 ```bash
-$ go get github.com/scottkiss/gomagic/httpmagic
+$ go get github.com/scottkiss/gomagic/webmagic
 ```
 
 ```go
 package main
 
 import (
-  "github.com/scottkiss/gomagic/httpmagic"
+  "github.com/scottkiss/gomagic/webmagic"
   "log"
   "net/http"
 )
 
 func main() {
-  ctx := httpmagic.NewContext()
+  app := webmagic.Application()
   //handler get request
   //eg. http://localhost:8888/hello/100
-  ctx.Get("/hello/:id", handler)
+  app.Get("/hello/:id", handler)
   //handler get request
-  ctx.Get("/world/:id", handlerXml)
+  app.Get("/world/:id", handlerXml)
   //handler post request
-  ctx.Post("/post", handlerPost)
-  http.Handle("/", ctx)
-  http.ListenAndServe(":8888", nil)
+  app.Post("/post", handlerPost)
+  app.Run(":8888")
 }
 
 type User struct {
@@ -40,7 +39,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
   id := params.Get(":id")
   log.Println(id)
   user := &User{Id: id, Name: "hello"}
-  out := httpmagic.NewOutput(w, r)
+  out := webmagic.NewOutput(w, r)
   out.Json(user, true)
 
 }
@@ -51,17 +50,17 @@ func handlerXml(w http.ResponseWriter, r *http.Request) {
   id := params.Get(":id")
   log.Println(id)
   user := &User{Id: id, Name: "world"}
-  out := httpmagic.NewOutput(w, r)
+  out := webmagic.NewOutput(w, r)
   out.Xml(user)
 
 }
 
 
 func handlerPost(w http.ResponseWriter, r *http.Request) {
-  in := httpmagic.NewInput(r)
+  in := webmagic.NewInput(r)
   user := &User{}
   in.ReadJson(user)
-  out := httpmagic.NewOutput(w, r)
+  out := webmagic.NewOutput(w, r)
   out.Json(user, true)
 
 }
