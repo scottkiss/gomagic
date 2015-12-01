@@ -36,6 +36,14 @@ func Static(pattern string, dir string) {
 	webmagic.Static(pattern, dir)
 }
 
+func RenderView(tpl string, data map[interface{}]interface{}) ([]byte, error) {
+	return webmagic.View().Render(tpl, data)
+}
+
+func SetViewPath(dir string) {
+	webmagic.View().Dir = dir
+}
+
 func Run(addr string) {
 	webmagic.Run(addr)
 }

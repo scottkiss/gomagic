@@ -28,33 +28,40 @@ type route struct {
 type Application struct {
 	routes  []*route
 	filters []http.HandlerFunc
+	view    *View
 }
 
 func NewApplication() *Application {
-	return &Application{}
+	app := new(Application)
+	app.view = new(View)
+	return app
 }
 
-func (c *Application) Get(pattern string, handler http.HandlerFunc) {
-	c.RegisterRoute(HTTPMETHOD["GET"], pattern, handler)
+func (app *Application) View() *View {
+	return app.view
 }
 
-func (c *Application) Del(pattern string, handler http.HandlerFunc) {
-	c.RegisterRoute(HTTPMETHOD["DELETE"], pattern, handler)
+func (app *Application) Get(pattern string, handler http.HandlerFunc) {
+	app.RegisterRoute(HTTPMETHOD["GET"], pattern, handler)
 }
 
-func (c *Application) Post(pattern string, handler http.HandlerFunc) {
-	c.RegisterRoute(HTTPMETHOD["POST"], pattern, handler)
+func (app *Application) Del(pattern string, handler http.HandlerFunc) {
+	app.RegisterRoute(HTTPMETHOD["DELETE"], pattern, handler)
 }
 
-func (c *Application) Head(pattern string, handler http.HandlerFunc) {
-	c.RegisterRoute(HTTPMETHOD["HEAD"], pattern, handler)
+func (app *Application) Post(pattern string, handler http.HandlerFunc) {
+	app.RegisterRoute(HTTPMETHOD["POST"], pattern, handler)
 }
 
-func (c *Application) Put(pattern string, handler http.HandlerFunc) {
-	c.RegisterRoute(HTTPMETHOD["PUT"], pattern, handler)
+func (app *Application) Head(pattern string, handler http.HandlerFunc) {
+	app.RegisterRoute(HTTPMETHOD["HEAD"], pattern, handler)
 }
 
-func (c *Application) RegisterRoute(method string, pattern string, handler http.HandlerFunc) {
+func (app *Application) Put(pattern string, handler http.HandlerFunc) {
+	app.RegisterRoute(HTTPMETHOD["PUT"], pattern, handler)
+}
+
+func (app *Application) RegisterRoute(method string, pattern string, handler http.HandlerFunc) {
 	subpath := strings.Split(pattern, "/")
 	params := make(map[int]string)
 	j := 0
@@ -84,18 +91,18 @@ func (c *Application) RegisterRoute(method string, pattern string, handler http.
 	route.handler = handler
 	route.regexp = regex
 
-	c.routes = append(c.routes, route)
+	app.routes = append(app.routes, route)
 }
 
-func (c *Application) Filter(filter http.HandlerFunc) {
-	c.filters = append(c.filters, filter)
+func (app *Application) Filter(filter http.HandlerFunc) {
+	app.filters = append(app.filters, filter)
 }
 
-func (c *Application) FilterParam(param string, filter http.HandlerFunc) {
+func (app *Application) FilterParam(param string, filter http.HandlerFunc) {
 	if !strings.HasPrefix(param, ":") {
 		param = ":" + param
 	}
-	c.Filter(func(w http.ResponseWriter, r *http.Request) {
+	app.Filter(func(w http.ResponseWriter, r *http.Request) {
 		p := r.URL.Query().Get(param)
 		if len(p) > 0 {
 			filter(w, r)
@@ -103,19 +110,19 @@ func (c *Application) FilterParam(param string, filter http.HandlerFunc) {
 	})
 }
 
-func (c *Application) Static(pattern string, dir string) {
+func (app *Application) Static(pattern string, dir string) {
 	pattern = pattern + "(.+)"
-	c.RegisterRoute(HTTPMETHOD["GET"], pattern, func(rw http.ResponseWriter, r *http.Request) {
+	app.RegisterRoute(HTTPMETHOD["GET"], pattern, func(rw http.ResponseWriter, r *http.Request) {
 		path := filepath.Clean(r.URL.Path)
 		path = filepath.Join(dir, path)
 		http.ServeFile(rw, r, path)
 	})
 }
 
-func (c *Application) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (app *Application) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	requestPath := r.URL.Path
 	w := &responseWrite{writer: rw}
-	for _, route := range c.routes {
+	for _, route := range app.routes {
 		if r.Method != route.method {
 			continue
 		}
@@ -136,7 +143,7 @@ func (c *Application) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 		}
 
-		for _, filter := range c.filters {
+		for _, filter := range app.filters {
 			filter(w, r)
 			if w.started {
 				return
