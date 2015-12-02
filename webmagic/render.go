@@ -36,6 +36,8 @@ func (self *Render) Build() ([]byte, error) {
 
 }
 
+func (self *Render) BuildAllTemplate() {}
+
 func getTemplate(funcmap template.FuncMap, root, file string, others ...string) (t *template.Template, err error) {
 	var filepathAbs string
 	filepathAbs = filepath.Join(root, file)
