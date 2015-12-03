@@ -1,6 +1,7 @@
 package webmagic
 
 import (
+	"html/template"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -34,6 +35,7 @@ type Application struct {
 func NewApplication() *Application {
 	app := new(Application)
 	app.view = new(View)
+	app.view.templateCache = make(map[string]*template.Template)
 	return app
 }
 

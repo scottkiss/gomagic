@@ -40,6 +40,10 @@ func RenderView(tpl string, data map[interface{}]interface{}) ([]byte, error) {
 	return webmagic.View().Render(tpl, data)
 }
 
+func CacheTpl(cache bool) {
+	webmagic.View().CacheTpl = cache
+}
+
 func SetViewPath(dir string) {
 	webmagic.View().Dir = dir
 }
