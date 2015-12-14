@@ -2,7 +2,6 @@ package dbmagic
 
 import (
 	"database/sql"
-	"database/sql/driver"
 	"errors"
 	"fmt"
 )
@@ -20,7 +19,7 @@ type DataSource struct {
 var (
 	ErrMissingDatabaseName = errors.New(`Missing database name.`)
 	ErrSockerHost          = errors.New(`Can not setting socket and host both.`)
-	ErrNotTransaction      = errors.New(`Is not a Transaction can not commit`)
+	ErrNotTransaction      = errors.New(`Is not a Transaction can not commit.`)
 )
 
 type DbMagic struct {
@@ -28,9 +27,9 @@ type DbMagic struct {
 	Tx *sql.Tx
 }
 
-func Open(driverName string, settings DataSource) (*DbMagic, error) {
+func Open(driverName string, settings *DataSource) (*DbMagic, error) {
 	var err error
-	dataSourceName := config(settings)
+	dataSourceName, err := config(settings)
 	dbm := new(DbMagic)
 	dbm.Db, err = sql.Open(driverName, dataSourceName)
 	if err != nil {
@@ -73,7 +72,7 @@ func (dbm *DbMagic) Exec(query string, args ...interface{}) (sql.Result, error) 
 	return dbm.Db.Exec(query, args...)
 }
 
-func config(settings DataSource) string {
+func config(settings *DataSource) (string, error) {
 	if settings.Host == "" {
 		if settings.Socket == "" {
 			settings.Host = "127.0.0.1"
@@ -84,11 +83,11 @@ func config(settings DataSource) string {
 	}
 
 	if settings.DatabaseName == "" {
-		return ErrMissingDatabaseName
+		return "", ErrMissingDatabaseName
 	}
 
 	if settings.Host != "" && settings.Socket != "" {
-		return ErrSockerHost
+		return "", ErrSockerHost
 	}
 
 	if settings.Charset == "" {
@@ -100,5 +99,5 @@ func config(settings DataSource) string {
 	} else if settings.Socket != "" {
 		dataSourceName = fmt.Sprintf("%s:%s@unix(%s)/%s?charset=%s", settings.User, settings.Password, settings.Socket, settings.DatabaseName, settings.Charset)
 	}
-	return dataSourceName
+	return dataSourceName, nil
 }
