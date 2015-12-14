@@ -20,6 +20,7 @@ type DataSource struct {
 var (
 	ErrMissingDatabaseName = errors.New(`Missing database name.`)
 	ErrSockerHost          = errors.New(`Can not setting socket and host both.`)
+	ErrNotTransaction      = errors.New(`Is not a Transaction can not commit`)
 )
 
 type DbMagic struct {
@@ -40,6 +41,36 @@ func Open(driverName string, settings DataSource) (*DbMagic, error) {
 
 func (dbm *DbMagic) Close() error {
 	return dbm.Db.Close()
+}
+
+func (dbm *DbMagic) Begin() error {
+	tx, err := dbm.Db.Begin()
+	if err != nil {
+		return err
+	}
+	dbm.Tx = tx
+	return nil
+}
+
+func (dbm *DbMagic) Commit() error {
+	if dbm.Tx == nil {
+		return ErrNotTransaction
+	}
+	return dbm.Tx.Commit()
+}
+
+func (dbm *DbMagic) Rollback() error {
+	if dbm.Tx == nil {
+		return ErrNotTransaction
+	}
+	return dbm.Tx.Rollback()
+}
+
+func (dbm *DbMagic) Exec(query string, args ...interface{}) (sql.Result, error) {
+	if dbm.Tx != nil {
+		return dbm.Tx.Exec(query, args...)
+	}
+	return dbm.Db.Exec(query, args...)
 }
 
 func config(settings DataSource) string {
