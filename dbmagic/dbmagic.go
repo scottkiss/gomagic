@@ -72,6 +72,14 @@ func (dbm *DbMagic) Exec(query string, args ...interface{}) (sql.Result, error) 
 	return dbm.Db.Exec(query, args...)
 }
 
+func (dbm *DbMagic) QueryRow(query string, args ...interface{}) *sql.Row {
+	return dbm.Db.QueryRow(query, args...)
+}
+
+func (dbm *DbMagic) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	return dbm.Db.Query(query, args...)
+}
+
 func config(settings *DataSource) (string, error) {
 	if settings.Host == "" {
 		if settings.Socket == "" {
