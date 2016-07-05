@@ -13,7 +13,6 @@ package main
 import (
   "github.com/scottkiss/gomagic/webmagic"
   "log"
-  "net/http"
 )
 
 func main() {
@@ -34,35 +33,26 @@ type User struct {
 }
 
 //response json
-func handler(w http.ResponseWriter, r *http.Request) {
-  params := r.URL.Query()
-  id := params.Get(":id")
+func handler(ctx *webmagic.Context) {
+  id := ctx.PathParam("id")
   log.Println(id)
   user := &User{Id: id, Name: "hello"}
-  out := webmagic.NewOutput(w, r)
-  out.Json(user, true)
-
+  ctx.Output.Json(user, true)
 }
 
 //response xml
-func handlerXml(w http.ResponseWriter, r *http.Request) {
-  params := r.URL.Query()
-  id := params.Get(":id")
+func handlerXml(ctx *webmagic.Context) {
+  id := ctx.PathParam("id")
   log.Println(id)
   user := &User{Id: id, Name: "world"}
-  out := webmagic.NewOutput(w, r)
-  out.Xml(user)
-
+  ctx.Output.Xml(user)
 }
 
 
-func handlerPost(w http.ResponseWriter, r *http.Request) {
-  in := webmagic.NewInput(r)
+func handlerPost(ctx *webmagic.Context) {
   user := &User{}
-  in.ReadJson(user)
-  out := webmagic.NewOutput(w, r)
-  out.Json(user, true)
-
+  ctx.Input.ReadJson(user)
+  ctx.Output.Json(user, true)
 }
 ```
 

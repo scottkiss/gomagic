@@ -271,7 +271,7 @@ func initTransport(settings map[string]interface{}) (http.RoundTripper, error) {
 	}
 
 	if proxyFunc_, ok := settings["ST_PROXY_FUNC"]; ok {
-		if proxyFunc, ok := proxyFunc_.(func(*http.Request) (int, string, error)); ok {
+		if proxyFunc, ok := proxyFunc_.(func(*http.Request) (string, string, error)); ok {
 			transport.Proxy = func(req *http.Request) (*url.URL, error) {
 				proxyType, u_, err := proxyFunc(req)
 				if err != nil {
@@ -291,9 +291,9 @@ func initTransport(settings map[string]interface{}) (http.RoundTripper, error) {
 			return nil, fmt.Errorf("ST_PROXY_FUNC is not a desired function")
 		}
 	} else {
-		var proxytype int
+		var proxytype string
 		if proxytype_, ok := settings["ST_PROXYTYPE"]; ok {
-			if proxytype, ok = proxytype_.(int); !ok || proxytype != PROXY_HTTP {
+			if proxytype, ok = proxytype_.(string); !ok || proxytype != PROXY_HTTP {
 				return nil, fmt.Errorf("ST_PROXYTYPE must be int, and only PROXY_HTTP is currently supported")
 			}
 		}

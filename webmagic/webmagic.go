@@ -1,9 +1,5 @@
 package webmagic
 
-import (
-	"net/http"
-)
-
 var (
 	webmagic *Application
 )
@@ -12,23 +8,23 @@ func init() {
 	webmagic = NewApplication()
 }
 
-func Get(pattern string, handler http.HandlerFunc) {
+func Get(pattern string, handler WebHandlerFunc) {
 	webmagic.Get(pattern, handler)
 }
 
-func Post(pattern string, handler http.HandlerFunc) {
+func Post(pattern string, handler WebHandlerFunc) {
 	webmagic.Post(pattern, handler)
 }
 
-func Del(pattern string, handler http.HandlerFunc) {
+func Del(pattern string, handler WebHandlerFunc) {
 	webmagic.Del(pattern, handler)
 }
 
-func Head(pattern string, handler http.HandlerFunc) {
+func Head(pattern string, handler WebHandlerFunc) {
 	webmagic.Head(pattern, handler)
 }
 
-func Put(pattern string, handler http.HandlerFunc) {
+func Put(pattern string, handler WebHandlerFunc) {
 	webmagic.Put(pattern, handler)
 }
 

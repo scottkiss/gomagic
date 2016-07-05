@@ -1,8 +1,6 @@
 package webmagic
 
 import (
-	"../webmagic"
-	"net/http"
 	"testing"
 )
 
@@ -13,15 +11,13 @@ func Test_Run(t *testing.T) {
 			t.Fatal(e)
 		}
 	}()
-	app := webmagic.NewApplication()
+	app := NewApplication()
 	app.Get("/hello/:id", handler)
 	app.Run(":8888")
 
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query()
-	id := params.Get(":id")
-	out := webmagic.NewOutput(w, r)
-	out.Html([]byte("hello webmagic , id is " + id))
+func handler(ctx *Context) {
+	id := ctx.PathParam("id")
+	ctx.Output.Html([]byte("hello webmagic , id is " + id))
 }

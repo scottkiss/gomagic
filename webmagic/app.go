@@ -3,7 +3,6 @@ package webmagic
 import (
 	"html/template"
 	"net/http"
-	"net/url"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -19,15 +18,8 @@ var (
 	}
 )
 
-type route struct {
-	method  string
-	regexp  *regexp.Regexp
-	params  map[int]string
-	handler http.HandlerFunc
-}
-
 type Application struct {
-	routes  []*route
+	routes  []*Route
 	filters []http.HandlerFunc
 	view    *View
 }
@@ -43,27 +35,27 @@ func (app *Application) View() *View {
 	return app.view
 }
 
-func (app *Application) Get(pattern string, handler http.HandlerFunc) {
+func (app *Application) Get(pattern string, handler WebHandlerFunc) {
 	app.RegisterRoute(HTTPMETHOD["GET"], pattern, handler)
 }
 
-func (app *Application) Del(pattern string, handler http.HandlerFunc) {
+func (app *Application) Del(pattern string, handler WebHandlerFunc) {
 	app.RegisterRoute(HTTPMETHOD["DELETE"], pattern, handler)
 }
 
-func (app *Application) Post(pattern string, handler http.HandlerFunc) {
+func (app *Application) Post(pattern string, handler WebHandlerFunc) {
 	app.RegisterRoute(HTTPMETHOD["POST"], pattern, handler)
 }
 
-func (app *Application) Head(pattern string, handler http.HandlerFunc) {
+func (app *Application) Head(pattern string, handler WebHandlerFunc) {
 	app.RegisterRoute(HTTPMETHOD["HEAD"], pattern, handler)
 }
 
-func (app *Application) Put(pattern string, handler http.HandlerFunc) {
+func (app *Application) Put(pattern string, handler WebHandlerFunc) {
 	app.RegisterRoute(HTTPMETHOD["PUT"], pattern, handler)
 }
 
-func (app *Application) RegisterRoute(method string, pattern string, handler http.HandlerFunc) {
+func (app *Application) RegisterRoute(method string, pattern string, handler WebHandlerFunc) {
 	subpath := strings.Split(pattern, "/")
 	params := make(map[int]string)
 	j := 0
@@ -87,7 +79,7 @@ func (app *Application) RegisterRoute(method string, pattern string, handler htt
 		panic(err)
 		return
 	}
-	route := &route{}
+	route := new(Route)
 	route.method = method
 	route.params = params
 	route.handler = handler
@@ -111,17 +103,20 @@ func (app *Application) FilterParam(param string, filter http.HandlerFunc) {
 		}
 	})
 }
-
 func (app *Application) Static(pattern string, dir string) {
 	pattern = pattern + "(.+)"
-	app.RegisterRoute(HTTPMETHOD["GET"], pattern, func(rw http.ResponseWriter, r *http.Request) {
-		path := filepath.Clean(r.URL.Path)
+	app.RegisterRoute(HTTPMETHOD["GET"], pattern, func(ctx *Context) {
+		path := filepath.Clean(ctx.Request.URL.Path)
 		path = filepath.Join(dir, path)
-		http.ServeFile(rw, r, path)
+		http.ServeFile(ctx.ResponseWriter, ctx.Request, path)
 	})
 }
 
 func (app *Application) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	var (
+		pathParams map[string]string
+	)
+	pathParams = make(map[string]string)
 	requestPath := r.URL.Path
 	w := &responseWrite{writer: rw}
 	for _, route := range app.routes {
@@ -131,18 +126,17 @@ func (app *Application) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if !route.regexp.MatchString(requestPath) {
 			continue
 		}
-
 		matches := route.regexp.FindStringSubmatch(requestPath)
 		if len(matches[0]) != len(requestPath) {
 			continue
 		}
+		context := NewContext(w, r)
 		if len(route.params) > 0 {
-			values := r.URL.Query()
 			for i, match := range matches[1:] {
-				values.Add(route.params[i], match)
+				key := strings.Replace(route.params[i], ":", "", 1)
+				pathParams[key] = match
 			}
-			r.URL.RawQuery = url.Values(values).Encode() + "&" + r.URL.RawQuery
-
+			context.pathParams = pathParams
 		}
 
 		for _, filter := range app.filters {
@@ -152,7 +146,7 @@ func (app *Application) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		route.handler(w, r)
+		route.handler(context)
 		break
 	}
 
