@@ -19,16 +19,37 @@ var (
 )
 
 type Application struct {
-	routes  []*Route
-	filters []http.HandlerFunc
-	view    *View
+	routes      []*Route
+	middlewares []*Middleware
+	view        *View
 }
 
 func NewApplication() *Application {
 	app := new(Application)
+	app.middlewares = make([]*Middleware, 0)
 	app.view = new(View)
 	app.view.templateCache = make(map[string]*template.Template)
 	return app
+}
+
+func (app *Application) Use(middleware *Middleware) {
+
+	for i, m := range app.middlewares {
+		//replace the same middleware
+		if m.Name == middleware.Name {
+			middleware.next = m.next
+			app.middlewares[i] = middleware
+			if i > 1 {
+				app.middlewares[i-1].next = middleware
+			}
+		} else if len(app.middlewares) > i+1 {
+			m.next = app.middlewares[i+1]
+		} else if len(app.middlewares) == i+1 {
+			m.next = middleware
+		}
+
+	}
+	app.middlewares = append(app.middlewares, middleware)
 }
 
 func (app *Application) View() *View {
@@ -88,21 +109,6 @@ func (app *Application) RegisterRoute(method string, pattern string, handler Web
 	app.routes = append(app.routes, route)
 }
 
-func (app *Application) Filter(filter http.HandlerFunc) {
-	app.filters = append(app.filters, filter)
-}
-
-func (app *Application) FilterParam(param string, filter http.HandlerFunc) {
-	if !strings.HasPrefix(param, ":") {
-		param = ":" + param
-	}
-	app.Filter(func(w http.ResponseWriter, r *http.Request) {
-		p := r.URL.Query().Get(param)
-		if len(p) > 0 {
-			filter(w, r)
-		}
-	})
-}
 func (app *Application) Static(pattern string, dir string) {
 	pattern = pattern + "(.+)"
 	app.RegisterRoute(HTTPMETHOD["GET"], pattern, func(ctx *Context) {
@@ -139,10 +145,13 @@ func (app *Application) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			context.pathParams = pathParams
 		}
 
-		for _, filter := range app.filters {
-			filter(w, r)
-			if w.started {
-				return
+		if len(app.middlewares) > 0 {
+			for _, middleware := range app.middlewares {
+				middleware.Handler(context, middleware)
+				if w.started {
+					return
+				}
+				break
 			}
 		}
 

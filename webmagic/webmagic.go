@@ -44,6 +44,11 @@ func SetViewPath(dir string) {
 	webmagic.View().Dir = dir
 }
 
+//use middleware
+func Use(middleware *Middleware) {
+	webmagic.Use(middleware)
+}
+
 func Run(addr string) {
 	webmagic.Run(addr)
 }
