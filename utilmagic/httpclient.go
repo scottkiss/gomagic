@@ -91,6 +91,12 @@ func DefaultHttpClinet() *HttpClient {
 }
 
 func CustomHttpClient(settings Settings, headers Headers) *HttpClient {
+	if settings == nil {
+		settings = defaultSetting
+	}
+	if headers == nil {
+		headers = defaultHeaders
+	}
 	client := &HttpClient{
 		Headers:        headers,
 		Settings:       settings,
@@ -109,6 +115,10 @@ type HttpClient struct {
 	CookieJar      http.CookieJar
 	cookies        []*http.Cookie
 	lock           *sync.Mutex
+}
+
+func (h *HttpClient) AddHeader(key, value string) {
+	h.Headers[key] = value
 }
 
 func (h *HttpClient) reset() {
